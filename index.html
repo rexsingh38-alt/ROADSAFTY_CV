@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CrashVision AI - Autonomous Accident Detection Studio</title>
+  <meta name="description" content="Local pretrained AI video analysis for traffic collision and near-miss review.">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="pretrained2-dashboard.css">
+  <link rel="stylesheet" href="solution-ui.css">
+</head>
+<body>
+  <script>
+    (()=>{let signedIn=false;try{signedIn=!!((sessionStorage.getItem('saferoadUser')&&sessionStorage.getItem('saferoadToken'))||(localStorage.getItem('saferoadUser')&&localStorage.getItem('saferoadToken')))}catch{}if(!signedIn)location.replace('login.html')})();
+  </script>
+  <div class="app-container">
+    <!-- NAVBAR -->
+    <header class="navbar">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">CrashVision AI</h1>
+          <div class="brand-tag">Accident Detection & Traffic Forensics • Local Pretrained AI</div>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <a class="btn-icon" href="traffic-overview.html" style="text-decoration:none">Traffic insights</a>
+        <button class="btn-icon" id="signOut" type="button">Sign out</button>
+        <div class="status-pill" id="navStatusPill">
+          <div class="status-indicator" id="navStatusIndicator"></div>
+          <span id="navStatusText">Checking local model</span>
+        </div>
+
+        <button class="btn-icon" id="btnSettings" title="Check local pretrained model">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          API Settings
+        </button>
+      </div>
+    </header>
+
+    <!-- TOP TELEMETRY STATS -->
+    <section class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">
+          <span>Target Architecture</span>
+          <span>⚡ Local</span>
+        </div>
+        <div class="stat-value cyan" id="statModel">YOLOv8n</div>
+        <div class="stat-sub">Local pretrained inference</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">
+          <span>Active Vehicles</span>
+          <span>🚗 Traffic</span>
+        </div>
+        <div class="stat-value" id="statVehicles">0</div>
+        <div class="stat-sub">Real-Time Trajectory Tracking</div>
+      </div>
+
+      <div class="stat-card" id="cardNearMisses">
+        <div class="stat-label">
+          <span>Near Misses (Yellow)</span>
+          <span>⚠️ Warning</span>
+        </div>
+        <div class="stat-value yellow" id="statNearMisses">0</div>
+        <div class="stat-sub">High Proximity & Evasive Action</div>
+      </div>
+
+      <div class="stat-card" id="cardCollisions">
+        <div class="stat-label">
+          <span>Collisions / Accidents (Red)</span>
+          <span>🚨 Impact</span>
+        </div>
+        <div class="stat-value crimson" id="statCollisions">0</div>
+        <div class="stat-sub">Destructive Overlap & Sudden Stop</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">
+          <span>Peak Risk Index</span>
+          <span>📊 Safety</span>
+        </div>
+        <div class="stat-value emerald" id="statRisk">0%</div>
+        <div class="stat-sub">Dynamic Kinetic Hazard Metric</div>
+      </div>
+    </section>
+
+    <!-- WORKSPACE -->
+    <main class="workspace-grid">
+      <!-- LEFT: UPLOADER & VIDEO STUDIO -->
+      <div class="main-column">
+        <!-- UPLOAD PANEL -->
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">
+              <svg fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+              </svg>
+              Video Source & Inference Setup
+            </h2>
+          </div>
+
+          <!-- DROPZONE -->
+          <div class="dropzone" id="dropzone">
+            <input type="file" id="fileInput" accept="video/mp4,video/avi,video/quicktime,video/x-matroska" style="display: none;">
+            <div class="dropzone-icon">
+              <svg fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <div class="dropzone-title">Drag & Drop Surveillance Video Here</div>
+            <div class="dropzone-sub">Supports MP4, AVI, MOV, MKV (Up to 500MB) or click to browse</div>
+
+            <!-- ONE CLICK TEST SAMPLE BUTTON -->
+            <button type="button" class="quick-sample-badge" id="btnLoadSample" style="display: none;">
+              ⚡ Load Test Video (videoplayback.mp4)
+            </button>
+          </div>
+
+          <!-- SELECTED FILE CARD -->
+          <div class="selected-file-card" id="selectedFileCard">
+            <div class="file-meta">
+              <span class="file-badge">READY</span>
+              <div>
+                <strong id="selectedFileName">filename.mp4</strong>
+                <div style="font-size: 0.75rem; color: var(--text-muted);" id="selectedFileSub">Size: 0 MB</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CONTROLS ROW -->
+          <div class="controls-row">
+            <div class="control-group">
+              <label class="control-label" for="analysisLocation">Monitored location</label>
+              <select id="analysisLocation" class="control-select">
+                <option>Junction A</option><option>Market Road</option><option>College Crossing</option>
+                <option>Junction B</option><option>Main Highway</option>
+              </select>
+            </div>
+            <div class="control-group">
+              <label class="control-label" for="selectStride">Processing Speed</label>
+              <select id="selectStride" class="control-select">
+                <option value="1">Deep Analysis (Every 1st frame)</option>
+                <option value="2" selected>Balanced Mode (Every 2nd frame - 2x Fast)</option>
+                <option value="3">Ultra Fast (Every 3rd frame - 3x Fast)</option>
+              </select>
+            </div>
+
+            <div class="control-group">
+              <label class="control-label" for="inputConf">Vehicle Confidence</label>
+              <select id="inputConf" class="control-select">
+                <option value="0.25">High Recall (0.25)</option>
+                <option value="0.35" selected>Standard (0.35)</option>
+                <option value="0.50">Strict (0.50)</option>
+              </select>
+            </div>
+
+            <div class="control-group">
+              <label class="control-label" for="inputIou">Collision Sensitivity</label>
+              <select id="inputIou" class="control-select">
+                <option value="0.10">Very Sensitive (IoU 0.10)</option>
+                <option value="0.14" selected>Normal Impact (IoU 0.14)</option>
+                <option value="0.22">Severe Crash Only (IoU 0.22)</option>
+              </select>
+            </div>
+
+            <button type="button" class="btn-primary" id="btnStartAnalysis" disabled>
+              🚀 Start AI Accident Detection
+            </button>
+          </div>
+
+          <!-- PROGRESS CARD -->
+          <div class="progress-card" id="progressCard">
+            <div class="progress-header">
+              <span id="progressStatus">Initializing pipeline...</span>
+              <strong id="progressPercent" style="color: var(--accent-cyan); font-family: var(--font-mono);">0%</strong>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-metrics">
+              <span id="metricFrames">Frames: 0 / 0</span>
+              <span id="metricEta">ETA: Calculating...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIDEO STUDIO PANEL -->
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">
+              <svg fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Accident Forensics & Video Studio
+            </h2>
+
+            <div class="player-btn-group">
+              <button class="pill-btn active" id="btnViewAnalyzed">🤖 AI Annotated</button>
+              <button class="pill-btn" id="btnViewRaw">📹 Raw Video</button>
+            </div>
+          </div>
+
+          <!-- VIDEO CONTAINER -->
+          <div class="video-wrapper" id="videoContainer">
+            <div class="video-empty-state">
+              <svg fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+              </svg>
+              <p>Upload a video or click "Load Test Video" to start analysis</p>
+            </div>
+          </div>
+
+          <!-- CONTROLS & TIMELINE -->
+          <div class="video-controls-bar" id="videoControlsBar" style="display: none;">
+            <div class="player-btn-group">
+              <span style="font-size: 0.78rem; color: var(--text-muted); margin-right: 0.5rem;">Playback Speed:</span>
+              <button class="pill-btn speed-btn" data-speed="0.5">0.5x</button>
+              <button class="pill-btn speed-btn active" data-speed="1.0">1.0x</button>
+              <button class="pill-btn speed-btn" data-speed="1.5">1.5x</button>
+              <button class="pill-btn speed-btn" data-speed="2.0">2.0x</button>
+            </div>
+
+            <div class="player-btn-group" id="exportActions" style="display: none;">
+              <button class="btn-icon" id="btnDownloadVideo">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                Download Annotated Video
+              </button>
+              <button class="btn-icon" id="btnDownloadReport">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                Export JSON Report
+              </button>
+            </div>
+          </div>
+
+          <!-- TIMELINE CHART -->
+          <div class="timeline-card">
+            <div class="chart-header">
+              <span>Collision Risk Timeline (Click curve to seek video)</span>
+              <span style="color: var(--accent-crimson);">Threshold: 50% Impact</span>
+            </div>
+            <canvas id="riskChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: INCIDENT FORENSIC FEED -->
+      <aside class="side-column">
+        <div class="panel incidents-panel">
+          <div class="panel-header">
+            <h2 class="panel-title">
+              <svg fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Detected Incident Feed
+            </h2>
+            <span class="incident-counter" id="incidentCountHeader">0</span>
+          </div>
+
+          <div class="incident-list" id="incidentList">
+            <div class="incident-empty">
+              <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 0.75rem auto; display: block; opacity: 0.3;">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+              </svg>
+              No incidents analyzed yet.<br>
+              Launch video detection to record accident timestamps and collision freeze-frames.
+            </div>
+          </div>
+        </div>
+        <section class="panel solution-panel" id="aiSolutionPanel" hidden aria-live="polite"></section>
+      </aside>
+    </main>
+
+    <!-- ROBOFLOW SETTINGS MODAL -->
+    <div class="modal-backdrop" id="modalSettings">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3 style="font-size: 1.15rem; font-weight: 700;">Pretrained Model</h3>
+          <button class="modal-close" id="btnCloseSettings">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="control-group">
+            <label class="control-label" for="inputModelId">Model</label>
+            <input type="text" id="inputModelId" class="control-input" value="local-yolov8n" readonly>
+            <span style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.2rem;">
+              Runs locally with the pretrained weights in backend/models. No API key or internet connection is needed.
+            </span>
+          </div>
+
+          <div style="display: flex; gap: 0.75rem; align-items: center; margin-top: 0.5rem;">
+            <button type="button" class="btn-icon" id="btnTestLocalModel">
+              ⚡ Check Model
+            </button>
+            <span id="roboflowTestResult" style="font-size: 0.78rem;"></span>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+            <button type="button" class="btn-primary" id="btnSaveSettings" style="padding: 0.55rem 1.4rem;">
+              Done
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="pretrained2-dashboard.js"></script>
+  <script src="solution-ui.js"></script>
+</body>
+</html>

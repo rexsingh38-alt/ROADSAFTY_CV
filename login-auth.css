@@ -1,0 +1,15 @@
+.login-security{display:flex;align-items:flex-start;justify-content:center;gap:7px;line-height:1.5;min-height:30px}
+.login-security i{flex:none;margin-top:1px}
+.login-security.login-error{color:#ff8b83}.login-security.login-error i{color:#ff7771}
+.login-security.login-success{color:#7ddbb5}.login-security.login-success i{color:#68d6a6}
+.login-submit:disabled{opacity:.72;cursor:wait}
+.otp-panel{margin-top:18px}
+.otp-panel[hidden]{display:none}
+.otp-input{margin:8px 0 12px}
+.otp-input input{font:600 17px var(--mono);letter-spacing:7px}
+.otp-actions{display:flex;justify-content:space-between;margin-top:11px}
+.otp-actions button{padding:4px 0;border:0;background:transparent;color:#78b9f1;font-size:9px}
+.otp-actions button:disabled{color:#71808c;cursor:wait}
+.login-switch{margin:14px 0 0;text-align:center;color:#8998a4;font-size:10px}
+.login-switch button{border:0;background:transparent;color:#78b9f1;font:inherit;font-weight:600;padding:4px;cursor:pointer}
+.login-switch button:hover{text-decoration:underline}

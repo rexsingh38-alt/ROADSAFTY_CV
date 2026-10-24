@@ -1,0 +1,6 @@
+#apiStatus:not(.api-online){color:#e7ac55}
+
+/* Keep dashboard panels steady when the API replaces demo rows with real results. */
+.events-panel .table-scroll{min-height:210px}
+#hotspotList{min-height:120px}
+@media(max-width:650px){.events-panel .table-scroll{min-height:210px}#hotspotList{min-height:120px}}

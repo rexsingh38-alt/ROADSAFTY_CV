@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1118">
+  <title>Secure sign in | SafeRoad AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="login.css">
+  <link rel="stylesheet" href="login-extra.css">
+  <link rel="stylesheet" href="login-auth.css">
+</head>
+<body class="login-body">
+  <main class="login-shell">
+    <section class="login-story">
+      <a class="brand login-brand" href="login.html" aria-label="SafeRoad AI home">
+        <span class="brand-mark"><i class="fa-solid fa-road"></i><span></span></span>
+        <span class="brand-copy"><strong>SafeRoad<span> AI</span></strong><small>TRAFFIC INTELLIGENCE</small></span>
+      </a>
+      <div class="story-content">
+        <span class="story-label"><span class="pulse"></span> TRAFFIC CONTROL ROOM</span>
+        <h1>Safer streets<br><span>start with awareness.</span></h1>
+        <p>Give your traffic operations team an early view of dangerous road interactions across monitored city zones.</p>
+        <div class="story-stat-row">
+          <div><strong>12</strong><span>CAMERA ZONES</span></div><i></i>
+          <div><strong>24/7</strong><span>RISK MONITORING</span></div><i></i>
+          <div><strong>0.8<span class="unit">s</span></strong><span>FASTEST DETECTION</span></div>
+        </div>
+      </div>
+      <div class="login-story-foot"><span><i class="fa-solid fa-shield-halved"></i> Traffic Safety Operations Portal</span><span>DETECT RISK BEFORE IT BECOMES AN ACCIDENT.</span></div>
+      <div class="login-road-art" aria-hidden="true"><div class="art-grid"></div><div class="art-road"><i></i><i></i><i></i><i></i></div><span class="art-track track-one"></span><span class="art-track track-two"></span><span class="art-point"></span><div class="art-label"><span class="pulse"></span> PREDICTED CONFLICT POINT</div></div>
+    </section>
+    <section class="login-form-side">
+      <div class="login-form-wrap">
+        <div class="login-eyebrow"><i class="fa-solid fa-building-shield"></i> SECURE TRAFFIC OFFICE PORTAL</div>
+        <h2>Welcome back</h2>
+        <p class="login-subtitle" id="loginSubtitle">Sign in with your email and password.</p>
+        <form id="authForm">
+          <label for="email">Email address</label>
+          <div class="login-input"><i class="fa-regular fa-envelope"></i><input type="email" id="email" placeholder="you@example.com" required autocomplete="username" maxlength="254"></div>
+          <label for="password">Password</label>
+          <div class="login-input"><i class="fa-solid fa-lock"></i><input type="password" id="password" placeholder="Enter your password" required autocomplete="current-password" minlength="1" maxlength="1024"></div>
+          <label class="remember-row"><input type="checkbox" id="rememberMe"><span>Keep me signed in on this device</span></label>
+          <button class="login-submit" type="submit" id="submitLogin">Sign in <i class="fa-solid fa-arrow-right"></i></button>
+        </form>
+        <div class="login-security" id="loginMessage" role="status" aria-live="polite">Your account and traffic operations data stay on this server.</div>
+        <p class="login-switch"><span id="switchPrompt">New to SafeRoad AI?</span> <button type="button" id="switchMode">Create account</button></p>
+      </div>
+      <div class="login-copyright">&copy; 2026 SafeRoad AI <span>&middot;</span> Traffic Safety Operations</div>
+    </section>
+  </main>
+  <script>
+    const API_URL = 'http://127.0.0.1:8002/api/auth';
+    const loginForm = document.querySelector('#authForm');
+    const loginButton = document.querySelector('#submitLogin');
+    const loginMessage = document.querySelector('#loginMessage');
+    const emailInput = document.querySelector('#email');
+    const passwordInput = document.querySelector('#password');
+    const switchMode = document.querySelector('#switchMode');
+    let createAccount = false;
+
+    function showMessage(message, state='') {
+      loginMessage.classList.remove('login-error', 'login-success');
+      if (state) loginMessage.classList.add(state);
+      loginMessage.textContent = message;
+    }
+
+    function saveSession(result) {
+      const user = JSON.stringify({email: result.officer.email, office: 'Traffic Safety Operations'});
+      const storage = document.querySelector('#rememberMe').checked ? localStorage : sessionStorage;
+      sessionStorage.removeItem('saferoadUser'); sessionStorage.removeItem('saferoadToken');
+      localStorage.removeItem('saferoadUser'); localStorage.removeItem('saferoadToken');
+      storage.setItem('saferoadUser', user);
+      storage.setItem('saferoadToken', result.access_token);
+    }
+
+    switchMode.addEventListener('click', () => {
+      createAccount = !createAccount;
+      document.querySelector('#loginSubtitle').textContent = createAccount
+        ? 'Create an account to access the traffic safety dashboard.'
+        : 'Sign in with your email and password.';
+      document.querySelector('#switchPrompt').textContent = createAccount ? 'Already have an account?' : 'New to SafeRoad AI?';
+      switchMode.textContent = createAccount ? 'Sign in' : 'Create account';
+      loginButton.innerHTML = createAccount ? 'Create account <i class="fa-solid fa-arrow-right"></i>' : 'Sign in <i class="fa-solid fa-arrow-right"></i>';
+      passwordInput.autocomplete = createAccount ? 'new-password' : 'current-password';
+      passwordInput.minLength = createAccount ? 8 : 1;
+      showMessage(createAccount ? 'Use at least 8 characters for your password.' : 'Enter your account details to continue.');
+    });
+
+    async function authenticate() {
+      loginButton.disabled = true;
+      loginButton.innerHTML = createAccount
+        ? 'Creating account <i class="fa-solid fa-spinner fa-spin"></i>'
+        : 'Signing in <i class="fa-solid fa-spinner fa-spin"></i>';
+      showMessage(createAccount ? 'Setting up your account...' : 'Checking your account...');
+      try {
+        const response = await fetch(`${API_URL}/${createAccount ? 'register' : 'login'}`, {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({email: emailInput.value, password: passwordInput.value})
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.detail || 'Could not sign in.');
+        saveSession(result);
+        showMessage(createAccount ? 'Account created. Opening the dashboard...' : 'Signed in. Opening the dashboard...', 'login-success');
+        setTimeout(() => location.href = 'index.html', 350);
+      } catch (error) {
+        showMessage(error.message.includes('Failed to fetch') ? 'Backend is unavailable. Start the server on port 8002.' : error.message, 'login-error');
+      } finally {
+        loginButton.disabled = false;
+        loginButton.innerHTML = createAccount ? 'Create account <i class="fa-solid fa-arrow-right"></i>' : 'Sign in <i class="fa-solid fa-arrow-right"></i>';
+      }
+    }
+
+    loginForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      if (!loginForm.reportValidity()) return;
+      await authenticate();
+    });
+  </script>
+</body>
+</html>

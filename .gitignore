@@ -1,0 +1,24 @@
+﻿# Local credentials and generated data
+.env
+.auth-secret
+*.db
+*.log
+
+# Python environments and cache
+.venv/
+__pycache__/
+*.py[cod]
+
+# Video uploads and analysis outputs
+backend/uploads/
+backend/processed/
+pretrained 2/uploads/
+pretrained 2/outputs/
+pretrained 2/inspect_*/
+pretrained 2/scratch_*/
+pretrained 2/test_snaps/
+
+# Temporary staging and archives
+.zip-staging-*/
+.project-zip-build-*/
+*.zip
